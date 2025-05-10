@@ -61,6 +61,8 @@ export async function extractTextFromImage(imageFile: File): Promise<string | nu
     // Preprocess image for better OCR
     const processedCanvas = await preprocessImage(imageFile);
     
+    console.log('Starting OCR processing...');
+    
     // Configure Tesseract with optimized settings
     const result = await Tesseract.recognize(
       processedCanvas,
@@ -75,6 +77,9 @@ export async function extractTextFromImage(imageFile: File): Promise<string | nu
         }
       }
     );
+    
+    console.log('OCR processing completed');
+    console.log('Extracted text:', result.data.text);
     
     return result.data.text;
   } catch (error) {
@@ -107,7 +112,9 @@ function extractRelevantSection(text: string): string {
     return inSection;
   });
   
-  return relevantLines.join('\n');
+  const result = relevantLines.join('\n');
+  console.log('Relevant section extracted:', result);
+  return result;
 }
 
 // Dictionary for common product name corrections
@@ -152,10 +159,14 @@ function normalizeProductName(rawName: string): string {
 export function processOcrText(text: string): string[] {
   if (!text) return [];
   
+  console.log('Processing OCR text...');
+  
   // First, extract the relevant section of the receipt
   const relevantText = extractRelevantSection(text);
   
+  // Improved pattern to catch products with EAN codes
   const productPattern = /(?:\b\d{13}\b)(?:\s+)([A-Z][A-Z\s]+?)(?=\s{2,}\d|\s*UN|$)/g;
+  // Fallback pattern for when EAN codes aren't detected
   const fallbackPattern = /^([A-Z][A-Z\s]{2,})(?:\s{2,}|\s+\d|\s+UN)/gm;
   
   const products = new Set<string>();
@@ -166,11 +177,13 @@ export function processOcrText(text: string): string[] {
     const productName = normalizeProductName(match[1].trim());
     if (productName.length > 2) {
       products.add(productName);
+      console.log('Found product with EAN:', productName);
     }
   }
   
   // If no matches found with EAN pattern, try fallback pattern
   if (products.size === 0) {
+    console.log('No products found with EAN pattern, trying fallback...');
     const lines = relevantText.split('\n');
     
     lines.forEach(line => {
@@ -180,23 +193,26 @@ export function processOcrText(text: string): string[] {
         const possibleProduct = normalizeProductName(words[0].trim());
         if (possibleProduct.length > 2 && !/^\d+$/.test(possibleProduct)) {
           products.add(possibleProduct);
+          console.log('Found product with fallback pattern 1:', possibleProduct);
         }
       }
     });
     
     // Still no matches? Try more aggressive pattern
     if (products.size === 0) {
+      console.log('No products found with fallback pattern 1, trying fallback pattern 2...');
       while ((match = fallbackPattern.exec(relevantText)) !== null) {
         const productName = normalizeProductName(match[1].trim());
         if (productName.length > 2) {
           products.add(productName);
+          console.log('Found product with fallback pattern 2:', productName);
         }
       }
     }
   }
   
   // Filter out common receipt terms and return unique products
-  return [...products]
+  const result = [...products]
     .filter(word => {
       // Filter out common receipt terms
       const lowercaseWord = word.toLowerCase();
@@ -217,4 +233,7 @@ export function processOcrText(text: string): string[] {
         !isNumeric && 
         !isDate;
     });
+  
+  console.log('Final extracted products:', result);
+  return result;
 }

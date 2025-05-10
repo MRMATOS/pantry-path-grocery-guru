@@ -50,6 +50,7 @@ const ShoppingPage: React.FC = () => {
     if (extractedProducts.length === 0) return;
 
     try {
+      console.log("Processing extracted products:", extractedProducts);
       const validProducts: any[] = [];
       
       // Validate each potential product against Supabase
@@ -92,6 +93,7 @@ const ShoppingPage: React.FC = () => {
           }
         });
         
+        console.log("Updated products:", updatedProducts);
         setProducts(optimizeShoppingRoute(updatedProducts));
         toast.success(`Adicionados ${validProducts.length} produtos do cupom`);
       } else {

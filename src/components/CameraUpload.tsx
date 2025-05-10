@@ -46,6 +46,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({
       const extractedText = await extractTextFromImage(file);
       if (!extractedText) {
         toast.error("Não foi possível extrair texto da imagem");
+        setIsProcessing(false);
         return;
       }
       
@@ -54,6 +55,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({
       const processedWords = processOcrText(extractedText);
       if (processedWords.length === 0) {
         toast.error("Nenhum produto encontrado no cupom");
+        setIsProcessing(false);
         return;
       }
       

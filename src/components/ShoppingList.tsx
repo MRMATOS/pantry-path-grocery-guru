@@ -30,7 +30,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({
 
   // Group products by aisle for better organization
   const productsByAisle = products.reduce((acc, product) => {
-    const aisle = product.corredor;
+    const aisle = product.corredor || 0;  // Ensure we have a valid aisle number
     if (!acc[aisle]) {
       acc[aisle] = [];
     }
@@ -40,6 +40,9 @@ const ShoppingList: React.FC<ShoppingListProps> = ({
 
   // Get unique aisles and sort them
   const aisles = Object.keys(productsByAisle).map(Number).sort((a, b) => a - b);
+  
+  console.log("Products by aisle:", productsByAisle);
+  console.log("Aisles:", aisles);
 
   return (
     <div className="mb-6">
@@ -62,7 +65,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({
               
               <ul className="space-y-2">
                 {productsByAisle[aisle].map((product) => (
-                  <li key={`${product.produto}-${product.id}`} className="flex items-center justify-between">
+                  <li key={`${product.produto}-${product.id || Math.random()}`} className="flex items-center justify-between">
                     <span className="text-gray-800">{product.produto}</span>
                     <Button 
                       variant="ghost" 
