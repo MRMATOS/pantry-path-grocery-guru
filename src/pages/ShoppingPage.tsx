@@ -14,6 +14,7 @@ import { v4 as uuidv4 } from 'uuid';
 const ShoppingPage: React.FC = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
+  const [currentStore, setCurrentStore] = useState('Dal Pozzo Vila Bela');
   const navigate = useNavigate();
 
   // Load products from localStorage on component mount
@@ -27,12 +28,23 @@ const ShoppingPage: React.FC = () => {
         console.error('Error parsing saved shopping list:', error);
       }
     }
+    
+    // Load store preference
+    const savedStore = localStorage.getItem('preferredStore');
+    if (savedStore) {
+      setCurrentStore(savedStore);
+    }
   }, []);
 
   // Save products to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('shoppingList', JSON.stringify(products));
   }, [products]);
+  
+  // Save store preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('preferredStore', currentStore);
+  }, [currentStore]);
 
   const handleTextExtracted = async (extractedProducts: string[]) => {
     if (extractedProducts.length === 0) return;
@@ -44,9 +56,12 @@ const ShoppingPage: React.FC = () => {
       for (const productName of extractedProducts) {
         const normalizedName = normalizeText(productName);
         
+        console.log(`Checking product against Supabase: "${normalizedName}" in store: ${currentStore}`);
+        
         const { data, error } = await supabase
           .from('produto')
           .select('*')
+          .eq('loja', currentStore)
           .ilike('produto', `%${normalizedName}%`)
           .limit(1);
 
@@ -56,7 +71,10 @@ const ShoppingPage: React.FC = () => {
         }
 
         if (data && data.length > 0) {
+          console.log(`Found product match:`, data[0]);
           validProducts.push(data[0]);
+        } else {
+          console.log(`No match found for "${productName}" in store: ${currentStore}`);
         }
       }
 
@@ -75,13 +93,13 @@ const ShoppingPage: React.FC = () => {
         });
         
         setProducts(optimizeShoppingRoute(updatedProducts));
-        toast.success(`Added ${validProducts.length} products from receipt`);
+        toast.success(`Adicionados ${validProducts.length} produtos do cupom`);
       } else {
-        toast.error("No valid products found in the receipt");
+        toast.error("Nenhum produto válido encontrado no cupom");
       }
     } catch (error) {
       console.error("Error validating products:", error);
-      toast.error("Error validating products from receipt");
+      toast.error("Erro ao validar produtos do cupom");
     }
   };
 
@@ -111,12 +129,12 @@ const ShoppingPage: React.FC = () => {
 
   const handleClearList = () => {
     setProducts([]);
-    toast.success("Shopping list cleared");
+    toast.success("Lista de compras apagada");
   };
 
   const handleSaveToPantry = async () => {
     if (products.length === 0) {
-      toast.error("Your shopping list is empty");
+      toast.error("Sua lista de compras está vazia");
       return;
     }
     
@@ -153,19 +171,41 @@ const ShoppingPage: React.FC = () => {
       });
       
       localStorage.setItem('pantryItems', JSON.stringify(allPantryItems));
-      toast.success("Items saved to pantry");
+      toast.success("Itens salvos na dispensa");
       
       // Navigate to pantry page
       navigate('/pantry');
     } catch (error) {
       console.error("Error saving to pantry:", error);
-      toast.error("Error saving to pantry");
+      toast.error("Erro ao salvar na dispensa");
     }
+  };
+  
+  const handleStoreChange = (store: string) => {
+    setCurrentStore(store);
+    // Clear products when changing store
+    setProducts([]);
   };
 
   return (
     <Layout>
-      <h1 className="text-xl font-semibold mb-6">Shopping List</h1>
+      <h1 className="text-xl font-semibold mb-6">Lista de Compras</h1>
+      
+      <div className="mb-4">
+        <label htmlFor="store-select" className="block text-sm font-medium text-gray-700 mb-1">
+          Loja
+        </label>
+        <select
+          id="store-select"
+          value={currentStore}
+          onChange={(e) => handleStoreChange(e.target.value)}
+          className="block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="Dal Pozzo Vila Bela">Dal Pozzo Vila Bela</option>
+          <option value="Dal Pozzo Cidade dos Lagos">Dal Pozzo Cidade dos Lagos</option>
+          <option value="Dal Pozzo Home Center">Dal Pozzo Home Center</option>
+        </select>
+      </div>
       
       <CameraUpload 
         onTextExtracted={handleTextExtracted} 
@@ -175,7 +215,8 @@ const ShoppingPage: React.FC = () => {
       
       <ProductInput 
         onProductsAdded={handleProductsAdded} 
-        disabled={isProcessingImage} 
+        disabled={isProcessingImage}
+        currentStore={currentStore}
       />
       
       <ShoppingList 

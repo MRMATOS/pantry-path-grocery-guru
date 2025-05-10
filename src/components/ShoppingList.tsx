@@ -22,7 +22,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({
     return (
       <div className="bg-white p-6 rounded-lg shadow-sm border text-center">
         <p className="text-gray-500">
-          Your shopping list is empty. Add products using the input above or scan a receipt.
+          Sua lista de compras está vazia. Adicione produtos usando o campo acima ou escaneie um cupom fiscal.
         </p>
       </div>
     );
@@ -45,9 +45,9 @@ const ShoppingList: React.FC<ShoppingListProps> = ({
     <div className="mb-6">
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="p-4 border-b bg-gray-50">
-          <h2 className="font-semibold text-gray-700">Shopping List</h2>
+          <h2 className="font-semibold text-gray-700">Lista de Compras</h2>
           <p className="text-sm text-gray-500">
-            Organized by shopping route ({products.length} items)
+            Organizada por rota de compras ({products.length} itens)
           </p>
         </div>
 
@@ -56,7 +56,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({
             <li key={aisle} className="p-4">
               <div className="flex items-center mb-2">
                 <div className="bg-app-blue-light text-white text-xs font-bold px-2 py-1 rounded">
-                  Aisle {aisle}
+                  Corredor {aisle}
                 </div>
               </div>
               
@@ -87,7 +87,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({
             className="text-gray-600"
           >
             <Trash2 size={16} className="mr-1" />
-            Clear List
+            Limpar Lista
           </Button>
           
           <Button 
@@ -96,7 +96,7 @@ const ShoppingList: React.FC<ShoppingListProps> = ({
             size="sm"
           >
             <Archive size={16} className="mr-1" />
-            Save to Pantry
+            Salvar na Dispensa
           </Button>
         </div>
       </div>

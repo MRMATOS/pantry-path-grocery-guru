@@ -33,7 +33,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({
 
   const handleProcessImage = async () => {
     if (!fileInputRef.current?.files?.[0]) {
-      toast.error("Please select an image first");
+      toast.error("Por favor, selecione uma imagem primeiro");
       return;
     }
 
@@ -41,25 +41,28 @@ const CameraUpload: React.FC<CameraUploadProps> = ({
     
     try {
       const file = fileInputRef.current.files[0];
-      toast.info("Processing receipt...");
+      toast.info("Processando cupom fiscal...");
       
       const extractedText = await extractTextFromImage(file);
       if (!extractedText) {
-        toast.error("Could not extract text from the image");
+        toast.error("Não foi possível extrair texto da imagem");
         return;
       }
+      
+      console.log("Texto extraído do cupom:", extractedText);
       
       const processedWords = processOcrText(extractedText);
       if (processedWords.length === 0) {
-        toast.error("No valid product names found in the image");
+        toast.error("Nenhum produto encontrado no cupom");
         return;
       }
       
+      console.log("Produtos identificados:", processedWords);
       onTextExtracted(processedWords);
-      toast.success(`Extracted ${processedWords.length} possible products`);
+      toast.success(`Extraídos ${processedWords.length} possíveis produtos`);
     } catch (error) {
-      console.error("Error processing image:", error);
-      toast.error("Error processing image");
+      console.error("Erro ao processar imagem:", error);
+      toast.error("Erro ao processar imagem do cupom");
     } finally {
       setIsProcessing(false);
     }
@@ -91,14 +94,14 @@ const CameraUpload: React.FC<CameraUploadProps> = ({
               <div className="relative mb-4 rounded-lg overflow-hidden">
                 <img 
                   src={selectedImage} 
-                  alt="Selected receipt" 
+                  alt="Cupom selecionado" 
                   className="w-full h-56 object-contain bg-gray-100" 
                 />
                 <button 
                   onClick={clearImage}
                   className="absolute top-2 right-2 bg-black bg-opacity-50 text-white p-1 rounded-full"
                 >
-                  <span className="sr-only">Remove image</span>
+                  <span className="sr-only">Remover imagem</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
@@ -109,7 +112,7 @@ const CameraUpload: React.FC<CameraUploadProps> = ({
                 className="w-full" 
                 disabled={isProcessing}
               >
-                {isProcessing ? "Processing..." : "Process Receipt"}
+                {isProcessing ? "Processando..." : "Processar Cupom"}
               </Button>
             </div>
           ) : (
@@ -120,10 +123,10 @@ const CameraUpload: React.FC<CameraUploadProps> = ({
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                 <Camera size={48} className="text-gray-400 mb-2" />
                 <p className="mb-2 text-sm text-gray-500">
-                  <span className="font-semibold">Click to take a photo</span> or upload an image
+                  <span className="font-semibold">Clique para tirar uma foto</span> ou enviar uma imagem
                 </p>
                 <p className="text-xs text-gray-500">
-                  Capture your receipt to extract products
+                  Capture seu cupom fiscal para extrair produtos
                 </p>
               </div>
             </label>

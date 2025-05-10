@@ -10,19 +10,20 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProductInputProps {
   onProductsAdded: (products: any[]) => void;
   disabled: boolean;
+  currentStore: string;
 }
 
 const ProductInput: React.FC<ProductInputProps> = ({ 
   onProductsAdded,
-  disabled
+  disabled,
+  currentStore
 }) => {
   const [productInput, setProductInput] = useState('');
   const [isValidating, setIsValidating] = useState(false);
-  const [store, setStore] = useState('Dal Pozzo Vila Bela');
 
   const validateAndAddProducts = async () => {
     if (!productInput.trim()) {
-      toast.error("Please enter a product name");
+      toast.error("Por favor, digite um nome de produto");
       return;
     }
 
@@ -36,7 +37,7 @@ const ProductInput: React.FC<ProductInputProps> = ({
         .filter(name => name.length > 0);
 
       if (productNames.length === 0) {
-        toast.error("Please enter valid product names");
+        toast.error("Por favor, digite nomes de produtos válidos");
         return;
       }
 
@@ -49,22 +50,26 @@ const ProductInput: React.FC<ProductInputProps> = ({
       for (const name of productNames) {
         const normalizedName = normalizeText(name);
         
+        console.log(`Validating product: "${normalizedName}" in store: ${currentStore}`);
+        
         const { data, error } = await supabase
           .from('produto')
           .select('*')
-          .eq('loja', store)
+          .eq('loja', currentStore)
           .ilike('produto', `%${normalizedName}%`)
           .limit(1);
 
         if (error) {
           console.error("Supabase error:", error);
-          toast.error("Error validating products");
+          toast.error("Erro ao validar produtos");
           continue;
         }
 
         if (data && data.length > 0) {
+          console.log(`Found match:`, data[0]);
           results.valid.push(data[0]);
         } else {
+          console.log(`No match found for "${name}" in store: ${currentStore}`);
           results.invalid.push(name);
         }
       }
@@ -73,16 +78,16 @@ const ProductInput: React.FC<ProductInputProps> = ({
       if (results.valid.length > 0) {
         onProductsAdded(results.valid);
         setProductInput('');
-        toast.success(`Added ${results.valid.length} product(s)`);
+        toast.success(`Adicionado(s) ${results.valid.length} produto(s)`);
       }
 
       if (results.invalid.length > 0) {
-        toast.error(`${results.invalid.length} product(s) not found: ${results.invalid.join(', ')}`);
+        toast.error(`${results.invalid.length} produto(s) não encontrado(s): ${results.invalid.join(', ')}`);
       }
 
     } catch (error) {
       console.error("Error validating products:", error);
-      toast.error("Error validating products");
+      toast.error("Erro ao validar produtos");
     } finally {
       setIsValidating(false);
     }
@@ -91,7 +96,7 @@ const ProductInput: React.FC<ProductInputProps> = ({
   return (
     <div className="flex space-x-2 mb-6">
       <Input
-        placeholder="Add products (e.g., arroz, leite, pão)"
+        placeholder="Adicionar produtos (ex: arroz, leite, pão)"
         value={productInput}
         onChange={(e) => setProductInput(e.target.value)}
         disabled={disabled || isValidating}
@@ -108,7 +113,7 @@ const ProductInput: React.FC<ProductInputProps> = ({
         disabled={disabled || isValidating || !productInput.trim()}
       >
         <Plus className="h-4 w-4 mr-1" />
-        Add
+        Adicionar
       </Button>
     </div>
   );
