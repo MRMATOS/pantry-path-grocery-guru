@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -53,18 +52,27 @@ const ShoppingPage: React.FC = () => {
       console.log("Processing extracted products:", extractedProducts);
       const validProducts: any[] = [];
       
-      // Validate each potential product against Supabase
+      // Keep track of product names we've already found to avoid duplicates
+      const foundProductNames = new Set<string>();
+      
+      // Process each potential product
       for (const productName of extractedProducts) {
+        // Skip if already processed
+        if (foundProductNames.has(productName.toLowerCase())) {
+          continue;
+        }
+        
         const normalizedName = normalizeText(productName);
         
         console.log(`Checking product against Supabase: "${normalizedName}" in store: ${currentStore}`);
         
+        // More flexible query - use ILIKE with wildcards to catch partial matches
         const { data, error } = await supabase
           .from('produto')
           .select('*')
           .eq('loja', currentStore)
           .ilike('produto', `%${normalizedName}%`)
-          .limit(1);
+          .limit(5);
 
         if (error) {
           console.error("Supabase error:", error);
@@ -72,15 +80,21 @@ const ShoppingPage: React.FC = () => {
         }
 
         if (data && data.length > 0) {
-          console.log(`Found product match:`, data[0]);
-          validProducts.push(data[0]);
+          // We may have multiple matches - for now, just take the first match
+          // In a more sophisticated solution we might want to score and rank the matches
+          console.log(`Found product matches (${data.length}):`, data);
+          
+          // Get the first match
+          const bestMatch = data[0];
+          validProducts.push(bestMatch);
+          foundProductNames.add(bestMatch.produto.toLowerCase());
         } else {
           console.log(`No match found for "${productName}" in store: ${currentStore}`);
         }
       }
 
       if (validProducts.length > 0) {
-        // Add new products to the list, avoiding duplicates
+        // Add new products to the list, avoiding duplicates with current list
         const updatedProducts = [...products];
         
         validProducts.forEach(product => {

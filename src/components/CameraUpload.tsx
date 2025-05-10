@@ -67,6 +67,10 @@ const CameraUpload: React.FC<CameraUploadProps> = ({
       toast.error("Erro ao processar imagem do cupom");
     } finally {
       setIsProcessing(false);
+      // Clear the file input to allow reprocessing the same file if needed
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 

@@ -88,6 +88,46 @@ export async function extractTextFromImage(imageFile: File): Promise<string | nu
   }
 }
 
+// Dictionary for common product name corrections
+const productCorrections: Record<string, string> = {
+  'CAFE': 'Café',
+  'MELTITA': 'Melitta',
+  'NELITTA': 'Melitta',
+  'TRADICION': 'Tradicional',
+  'ACUCAR': 'Açúcar',
+  'LEITE': 'Leite',
+  'FARINHA': 'Farinha',
+  'PAO': 'Pão',
+  'FILTRO': 'Filtro',
+  'PAPEL': 'Papel',
+  'GOM JESU': 'Bom Jesus',
+  'BOM JESU': 'Bom Jesus',
+  'BISCOITO': 'Biscoito',
+  'MACARRAO': 'Macarrão',
+  'FEIJAO': 'Feijão',
+  'ARROZ': 'Arroz'
+};
+
+// Normalize text by removing accents, converting to lowercase
+export function normalizeText(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+// Enhanced product name normalization with corrections
+function normalizeProductName(rawName: string): string {
+  const words = rawName.toUpperCase().split(' ');
+  
+  const correctedWords = words.map(word => 
+    productCorrections[word] || word.toLowerCase()
+  );
+  
+  return correctedWords.join(' ');
+}
+
 // Extract the relevant section from receipt text
 function extractRelevantSection(text: string): string {
   const lines = text.split('\n');
@@ -115,44 +155,6 @@ function extractRelevantSection(text: string): string {
   const result = relevantLines.join('\n');
   console.log('Relevant section extracted:', result);
   return result;
-}
-
-// Dictionary for common product name corrections
-const productCorrections: Record<string, string> = {
-  'CAFE': 'Café',
-  'MELTITA': 'Melitta',
-  'TRADICION': 'Tradicional',
-  'ACUCAR': 'Açúcar',
-  'LEITE': 'Leite',
-  'FARINHA': 'Farinha',
-  'PAO': 'Pão',
-  'FILTRO': 'Filtro',
-  'PAPEL': 'Papel',
-  'BOM JESU': 'Bom Jesus',
-  'BISCOITO': 'Biscoito',
-  'MACARRAO': 'Macarrão',
-  'FEIJAO': 'Feijão',
-  'ARROZ': 'Arroz'
-};
-
-// Normalize text by removing accents, converting to lowercase
-export function normalizeText(text: string): string {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim();
-}
-
-// Enhanced product name normalization with corrections
-function normalizeProductName(rawName: string): string {
-  const words = rawName.toUpperCase().split(' ');
-  
-  const correctedWords = words.map(word => 
-    productCorrections[word] || word.toLowerCase()
-  );
-  
-  return correctedWords.join(' ');
 }
 
 // Enhanced product extraction from receipt text
@@ -211,8 +213,25 @@ export function processOcrText(text: string): string[] {
     }
   }
   
+  // Process the full text to find product references regardless of EAN codes
+  // This is a more aggressive approach that might catch more products
+  const words = text.split(/\s+/);
+  const potentialProducts = new Set<string>();
+  
+  // Look for phrases of 1-3 words
+  for (let i = 0; i < words.length; i++) {
+    for (let j = 1; j <= 3; j++) {
+      if (i + j <= words.length) {
+        const phrase = words.slice(i, i + j).join(' ').trim();
+        if (phrase.length > 3 && !/^\d+$/.test(phrase)) {
+          potentialProducts.add(normalizeProductName(phrase));
+        }
+      }
+    }
+  }
+  
   // Filter out common receipt terms and return unique products
-  const result = [...products]
+  const result = [...products, ...potentialProducts]
     .filter(word => {
       // Filter out common receipt terms
       const lowercaseWord = word.toLowerCase();
@@ -235,5 +254,5 @@ export function processOcrText(text: string): string[] {
     });
   
   console.log('Final extracted products:', result);
-  return result;
+  return Array.from(new Set(result)); // Remove duplicates
 }

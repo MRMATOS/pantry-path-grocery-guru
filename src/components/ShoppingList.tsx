@@ -65,7 +65,10 @@ const ShoppingList: React.FC<ShoppingListProps> = ({
               
               <ul className="space-y-2">
                 {productsByAisle[aisle].map((product) => (
-                  <li key={`${product.produto}-${product.id || Math.random()}`} className="flex items-center justify-between">
+                  <li 
+                    key={`${product.produto}-${product.id || Math.random()}`} 
+                    className="flex items-center justify-between py-2 px-3 bg-white border-l-4 border-app-blue-light rounded shadow-sm"
+                  >
                     <span className="text-gray-800">{product.produto}</span>
                     <Button 
                       variant="ghost" 
