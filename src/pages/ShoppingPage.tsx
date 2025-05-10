@@ -5,14 +5,14 @@ import Layout from '@/components/Layout';
 import CameraUpload from '@/components/CameraUpload';
 import ProductInput from '@/components/ProductInput';
 import ShoppingList from '@/components/ShoppingList';
-import { supabase, Product, PantryItem } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { normalizeText } from '@/lib/ocr';
 import { optimizeShoppingRoute } from '@/lib/shoppingRoute';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
 const ShoppingPage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const navigate = useNavigate();
 
@@ -38,7 +38,7 @@ const ShoppingPage: React.FC = () => {
     if (extractedProducts.length === 0) return;
 
     try {
-      const validProducts: Product[] = [];
+      const validProducts: any[] = [];
       
       // Validate each potential product against Supabase
       for (const productName of extractedProducts) {
@@ -56,7 +56,7 @@ const ShoppingPage: React.FC = () => {
         }
 
         if (data && data.length > 0) {
-          validProducts.push(data[0] as Product);
+          validProducts.push(data[0]);
         }
       }
 
@@ -85,7 +85,7 @@ const ShoppingPage: React.FC = () => {
     }
   };
 
-  const handleProductsAdded = (newProducts: Product[]) => {
+  const handleProductsAdded = (newProducts: any[]) => {
     // Add new products, avoiding duplicates
     const updatedProducts = [...products];
     
@@ -102,7 +102,7 @@ const ShoppingPage: React.FC = () => {
     setProducts(optimizeShoppingRoute(updatedProducts));
   };
 
-  const handleRemoveProduct = (productToRemove: Product) => {
+  const handleRemoveProduct = (productToRemove: any) => {
     setProducts(products.filter(p => 
       p.id !== productToRemove.id || 
       p.produto !== productToRemove.produto
@@ -122,7 +122,7 @@ const ShoppingPage: React.FC = () => {
     
     try {
       // Create pantry items from the shopping list
-      const pantryItems: PantryItem[] = products.map(product => ({
+      const pantryItems = products.map(product => ({
         id: uuidv4(),
         product_name: product.produto,
         quantity: 1,
@@ -131,7 +131,7 @@ const ShoppingPage: React.FC = () => {
       
       // Save to localStorage for now (in a real app, would use a database)
       const existingPantry = localStorage.getItem('pantryItems');
-      let allPantryItems: PantryItem[] = [];
+      let allPantryItems: any[] = [];
       
       if (existingPantry) {
         allPantryItems = JSON.parse(existingPantry);

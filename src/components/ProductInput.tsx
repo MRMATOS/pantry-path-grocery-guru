@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { normalizeText } from '@/lib/ocr';
-import { supabase, Product } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProductInputProps {
-  onProductsAdded: (products: Product[]) => void;
+  onProductsAdded: (products: any[]) => void;
   disabled: boolean;
 }
 
@@ -18,6 +18,7 @@ const ProductInput: React.FC<ProductInputProps> = ({
 }) => {
   const [productInput, setProductInput] = useState('');
   const [isValidating, setIsValidating] = useState(false);
+  const [store, setStore] = useState('Dal Pozzo Vila Bela');
 
   const validateAndAddProducts = async () => {
     if (!productInput.trim()) {
@@ -39,7 +40,7 @@ const ProductInput: React.FC<ProductInputProps> = ({
         return;
       }
 
-      const results: { valid: Product[], invalid: string[] } = {
+      const results: { valid: any[], invalid: string[] } = {
         valid: [],
         invalid: []
       };
@@ -51,6 +52,7 @@ const ProductInput: React.FC<ProductInputProps> = ({
         const { data, error } = await supabase
           .from('produto')
           .select('*')
+          .eq('loja', store)
           .ilike('produto', `%${normalizedName}%`)
           .limit(1);
 
@@ -61,7 +63,7 @@ const ProductInput: React.FC<ProductInputProps> = ({
         }
 
         if (data && data.length > 0) {
-          results.valid.push(data[0] as Product);
+          results.valid.push(data[0]);
         } else {
           results.invalid.push(name);
         }

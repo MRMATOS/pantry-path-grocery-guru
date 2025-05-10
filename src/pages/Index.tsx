@@ -1,9 +1,14 @@
 
 import React from 'react';
-import ShoppingPage from './ShoppingPage';
+import ProductLookup from '@/components/ProductLookup';
+import Layout from '@/components/Layout';
 
 const Index: React.FC = () => {
-  return <ShoppingPage />;
+  return (
+    <Layout>
+      <ProductLookup />
+    </Layout>
+  );
 };
 
 export default Index;
